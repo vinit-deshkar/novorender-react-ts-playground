@@ -39,7 +39,7 @@ export const ViewManager: FunctionComponent<ViewManagerProps> = (props) => {
     const { activeController } = view;
     console.log(activeController);
     // view.modifyRenderState({ grid: { enabled: true } }); // enable grid
-    OrbitController.assert(activeController);
+    FlightController.assert(activeController);
     activeController.updateParams({ rotationalVelocity: newVelocity });
   };
 
@@ -47,7 +47,7 @@ export const ViewManager: FunctionComponent<ViewManagerProps> = (props) => {
   const onFieldOfViewChange = (fov: number) => {
     const { activeController } = view;
     console.log(activeController);
-    OrbitController.assert(activeController);
+    FlightController.assert(activeController);
     activeController.fov = fov;
   };
 
