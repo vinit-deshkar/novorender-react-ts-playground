@@ -1,15 +1,16 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useRef } from "react";
 import { Box, Typography } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import {
+  FlightController,
   OrbitController,
   RenderStateChanges,
   SceneConfig,
   View,
 } from "@novorender/api";
+import { vec3 } from "gl-matrix";
 import { SliderController } from "./SliderController";
 import { orbitControllerDefaults } from "../constants/orbitControllerDefaults";
-import { useDefaultCamera } from "../utils/cameraHelpers";
 
 interface ViewManagerProps {
   view: View;
@@ -27,6 +28,11 @@ export const ViewManager: FunctionComponent<ViewManagerProps> = (props) => {
 
   const { fov, pivot } = orbitControllerDefaults;
   const [x, y, z] = pivot;
+  const { activeController } = view;
+  FlightController.assert(activeController);
+
+  const initialPosition = useRef(activeController.position);
+  const initialRotation = useRef(activeController.rotation);
 
   // On Camera controller rotational velocity change
   const onRotationalVelocityChange = (newVelocity: number) => {
@@ -49,8 +55,8 @@ export const ViewManager: FunctionComponent<ViewManagerProps> = (props) => {
   const onCameraPositionChange = (newPosition: number, axis: Axis) => {
     const { activeController } = view;
     console.log(activeController);
-    OrbitController.assert(activeController);
-    let [x, y, z] = activeController.pivot;
+    FlightController.assert(activeController);
+    let [x, y, z] = activeController.position;
     switch (axis) {
       case Axis.X:
         console.log(`Position X changed to ${newPosition}`);
@@ -68,17 +74,23 @@ export const ViewManager: FunctionComponent<ViewManagerProps> = (props) => {
         console.log(`Unknown newPosition: ${newPosition}`);
     }
 
-    activeController.pivot = [x, y, z];
+    view.activeController.moveTo(vec3.fromValues(x, y, z));
   };
 
   const onResetView = () => {
-    console.log("inside onLoadPublicScene");
-    const cadCamera = useDefaultCamera(sceneConfig);
-    if (!cadCamera) {
-      return;
-    }
-    const { kind, fov, position, rotation } = cadCamera;
-    view.modifyRenderState({ camera: { kind, position, rotation, fov } });
+    /*
+      const cadCamera = useDefaultCamera(sceneConfig);
+      if (!cadCamera) {
+        return;
+      }
+      const { kind, fov, position, rotation } = cadCamera;
+      view.modifyRenderState({ camera: { kind, position, rotation, fov } });
+    */
+    activeController.moveTo(
+      initialPosition.current,
+      undefined,
+      initialRotation.current
+    );
   };
 
   const clipHandlerX = (x: number) => {

@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { RenderStateChanges, SceneConfig, View } from "@novorender/api";
+import {
+  downloadGLTF,
+  RenderStateChanges,
+  SceneConfig,
+  View,
+} from "@novorender/api";
 import { ViewManager } from "./components/ViewManager";
 import { SceneData } from "@novorender/data-js-api";
 import { ViewBuilder } from "./utils/ViewBuilder";
@@ -32,12 +37,17 @@ function App() {
       const view = await viewBuilder.createView(canvas);
       const sceneManager = new SceneManager(view);
       const { sceneData, sceneConfig } = await sceneManager.loadPublicScene();
-      // useFlightCameraController(view);
+      useFlightCameraController(view);
+
+      const objects = await downloadGLTF(
+        new URL("https://assets.novorender.com/gltf/logo.glb")
+      );
 
       setSceneConfig(sceneConfig);
 
       view.modifyRenderState({
         grid: { enabled: true },
+        dynamic: { objects },
       } as RenderStateChanges);
 
       // Register event handler for object selection etc.
@@ -67,14 +77,15 @@ function App() {
       highlightObjects(view, [result.objectId]);
 
       // Load metadata
-      // try {
-      // const { db } = sceneData;
-      //   const objectData = await db?.getObjectMetdata(result.objectId);
-      //   // Display metadata
-      //   console.log(objectData);
-      // } catch (e) {
-      //   console.log("Error while fetching object data :", e);
-      // }
+      try {
+        const { db } = sceneData;
+        const objectData = await db?.getObjectMetdata(result.objectId);
+        console.log("objectData :", objectData);
+        // Display metadata
+        alert(JSON.stringify(objectData));
+      } catch (e) {
+        console.log("Error while fetching object data :", e);
+      }
     };
   };
 

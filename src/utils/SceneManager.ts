@@ -13,7 +13,7 @@ export class SceneManager {
     sceneData: SceneData;
     sceneConfig: SceneConfig;
   }> {
-    const serviceUrl = "https://data-v2.novorender.com/api";
+    const serviceUrl = "https://data.novorender.com/api";
 
     // Initialize the data API with the Novorender data server service
     const dataApi = createAPI({
@@ -22,7 +22,7 @@ export class SceneManager {
 
     // Condos scene ID, but can be changed to any public scene ID
     const sceneData = await dataApi.loadScene(
-      "3b5e65560dc4422da5c7c3f827b6a77c"
+      "95a89d20dd084d9486e383e131242c4c"
     );
 
     if ("error" in sceneData) {
@@ -43,7 +43,6 @@ export class SceneManager {
     );
 
     const { center, radius } = sceneConfig.boundingSphere;
-    console.log("center :", center);
 
     const adjustedCenter = offset
       ? vec3.fromValues(
