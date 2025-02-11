@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { createColorSetHighlight, SceneConfig, View } from "@novorender/api";
+import { RenderStateChanges, SceneConfig, View } from "@novorender/api";
 import { ViewManager } from "./components/ViewManager";
 import { SceneData } from "@novorender/data-js-api";
-import { createView } from "./utils/createView";
-import { loadPublicScene } from "./utils/loadPublicScene";
+import { ViewBuilder } from "./utils/ViewBuilder";
+import { SceneManager } from "./utils/SceneManager";
+import { highlightObjects } from "./utils/hightlightObjects";
+import { useFlightCameraController } from "./utils/cameraHelpers";
 
 function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -25,24 +27,29 @@ function App() {
   // Create a simple sphere mesh object.
   const main = async (canvas: HTMLCanvasElement) => {
     try {
-      console.log("inside onLoadPublicScene");
-      const view = await createView(canvas);
-      const loadSceneResult = await loadPublicScene(view);
+      // Create instance of View
+      const viewBuilder = new ViewBuilder();
+      const view = await viewBuilder.createView(canvas);
+      const sceneManager = new SceneManager(view);
+      const { sceneData, sceneConfig } = await sceneManager.loadPublicScene();
+      // useFlightCameraController(view);
 
-      // await loadPublicScene(view, 20);
-
-      const { sceneData, sceneConfig } = loadSceneResult;
       setSceneConfig(sceneConfig);
 
-      view.modifyRenderState({ grid: { enabled: true }, camera: {} });
+      view.modifyRenderState({
+        grid: { enabled: true },
+      } as RenderStateChanges);
 
       // Register event handler for object selection etc.
       await registerEventHandlers(view, sceneData);
 
       // Mark the isViewReady state as true and set the view in state
       setView(view);
+
       // Run the view
       await view.run();
+
+      // Dispose the view
       view.dispose();
     } catch (error) {
       console.error("Error initializing view:", error);
@@ -50,32 +57,24 @@ function App() {
   };
 
   const registerEventHandlers = async (view: View, sceneData: SceneData) => {
-    const limeGreen = createColorSetHighlight([0, 1, 0]);
-    const { db } = sceneData;
-
     view.canvas.onclick = async (e: MouseEvent) => {
       const result = await view.pick(e.offsetX, e.offsetY);
-      const objectIds: number[] = [];
-      if (result) {
-        console.log(`You picked object id:${result.objectId}`);
-        // Add selected object to highlight group
-        objectIds.push(result.objectId);
-
-        // Load metadata
-        // try {
-        //   const objectData = await db?.getObjectMetdata(result.objectId);
-        //   // Display metadata
-        //   console.log(objectData);
-        // } catch (e) {
-        //   console.log("Error while fetching object data :", e);
-        // }
+      if (!result) {
+        return;
       }
 
-      view.modifyRenderState({
-        highlights: {
-          groups: [{ action: limeGreen, objectIds }],
-        },
-      });
+      console.log(`You picked object id:${result.objectId}`);
+      highlightObjects(view, [result.objectId]);
+
+      // Load metadata
+      // try {
+      // const { db } = sceneData;
+      //   const objectData = await db?.getObjectMetdata(result.objectId);
+      //   // Display metadata
+      //   console.log(objectData);
+      // } catch (e) {
+      //   console.log("Error while fetching object data :", e);
+      // }
     };
   };
 

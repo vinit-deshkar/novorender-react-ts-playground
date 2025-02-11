@@ -1,10 +1,15 @@
 import { FunctionComponent } from "react";
 import { Box, Typography } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
-import { OrbitController, SceneConfig, View } from "@novorender/api";
+import {
+  OrbitController,
+  RenderStateChanges,
+  SceneConfig,
+  View,
+} from "@novorender/api";
 import { SliderController } from "./SliderController";
 import { orbitControllerDefaults } from "../constants/orbitControllerDefaults";
-import { useDefaultCamera } from "../utils/getDefaultCamera";
+import { useDefaultCamera } from "../utils/cameraHelpers";
 
 interface ViewManagerProps {
   view: View;
@@ -24,7 +29,7 @@ export const ViewManager: FunctionComponent<ViewManagerProps> = (props) => {
   const [x, y, z] = pivot;
 
   // On Camera controller rotational velocity change
-  const onRotationalVelocityChange = async (newVelocity: number) => {
+  const onRotationalVelocityChange = (newVelocity: number) => {
     const { activeController } = view;
     console.log(activeController);
     // view.modifyRenderState({ grid: { enabled: true } }); // enable grid
@@ -33,7 +38,7 @@ export const ViewManager: FunctionComponent<ViewManagerProps> = (props) => {
   };
 
   // On Camera controller FOV change
-  const onFieldOfViewChange = async (fov: number) => {
+  const onFieldOfViewChange = (fov: number) => {
     const { activeController } = view;
     console.log(activeController);
     OrbitController.assert(activeController);
@@ -41,7 +46,7 @@ export const ViewManager: FunctionComponent<ViewManagerProps> = (props) => {
   };
 
   // On Camera controller FOV change
-  const onCameraPositionChange = async (newPosition: number, axis: Axis) => {
+  const onCameraPositionChange = (newPosition: number, axis: Axis) => {
     const { activeController } = view;
     console.log(activeController);
     OrbitController.assert(activeController);
@@ -74,6 +79,28 @@ export const ViewManager: FunctionComponent<ViewManagerProps> = (props) => {
     }
     const { kind, fov, position, rotation } = cadCamera;
     view.modifyRenderState({ camera: { kind, position, rotation, fov } });
+  };
+
+  const clipHandlerX = (x: number) => {
+    console.log("x :", x);
+    view.modifyRenderState({
+      clipping: {
+        draw: true,
+        enabled: true,
+        planes: [{ normalOffset: [1, 0, 0, x] }],
+      },
+    } as RenderStateChanges);
+  };
+
+  const clipHandlerZ = (z: number) => {
+    console.log("z :", z);
+    view.modifyRenderState({
+      clipping: {
+        draw: true,
+        enabled: true,
+        planes: [{ normalOffset: [-0, -0, -1, -z] }],
+      },
+    } as RenderStateChanges);
   };
 
   return (
@@ -124,6 +151,20 @@ export const ViewManager: FunctionComponent<ViewManagerProps> = (props) => {
         maxValue={1000}
         defaultValue={z}
         onValueChange={(value) => onCameraPositionChange(value, Axis.Z)}
+      />
+      <SliderController
+        label="Move YZ Plane Along X"
+        minValue={700}
+        maxValue={750}
+        defaultValue={0}
+        onValueChange={clipHandlerX}
+      />
+      <SliderController
+        label="Move XY Plane Along Z"
+        minValue={-10}
+        maxValue={20}
+        defaultValue={0}
+        onValueChange={clipHandlerZ}
       />
     </Box>
   );

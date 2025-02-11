@@ -1,4 +1,4 @@
-import { SceneConfig } from "@novorender/api";
+import { SceneConfig, View } from "@novorender/api";
 import { quat, vec3 } from "gl-matrix";
 
 export type CadCamera = {
@@ -67,3 +67,8 @@ export function useDefaultCamera(
 
   return getDefaultCamera(bb);
 }
+
+export const useFlightCameraController = (view: View) => {
+  view.switchCameraController("flight");
+  console.log("activeController updated to flight", view.activeController);
+};
